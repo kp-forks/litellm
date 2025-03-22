@@ -737,13 +737,16 @@ async def user_update(
             existing_user_row = await prisma_client.db.litellm_usertable.find_first(
                 where={"user_id": data.user_id}
             )
-            if existing_user_row is None:
-                raise Exception(f"User not found, passed user_id={data.user_id}")
-            existing_user_row = LiteLLM_UserTable(
-                **existing_user_row.model_dump(exclude_none=True)
-            )
+            if existing_user_row is not None:
+                existing_user_row = LiteLLM_UserTable(
+                    **existing_user_row.model_dump(exclude_none=True)
+                )
 
-        existing_metadata = cast(Dict, getattr(existing_user_row, "metadata", {}) or {})
+        existing_metadata = (
+            cast(Dict, getattr(existing_user_row, "metadata", {}) or {})
+            if existing_user_row is not None
+            else {}
+        )
 
         non_default_values = prepare_metadata_fields(
             data=data,
@@ -1237,4 +1240,5 @@ async def ui_view_users(
         return [LiteLLM_UserTableFiltered(**user.model_dump()) for user in users]
 
     except Exception as e:
+        verbose_proxy_logger.exception(f"Error searching users: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error searching users: {str(e)}")
