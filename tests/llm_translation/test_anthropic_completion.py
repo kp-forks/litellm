@@ -422,7 +422,7 @@ def test_anthropic_tool_helper(cache_control_location):
     else:
         tool["cache_control"] = {"type": "ephemeral"}
 
-    tool = AnthropicConfig()._map_tool_helper(tool=tool)
+    tool, _ = AnthropicConfig()._map_tool_helper(tool=tool)
 
     assert tool["cache_control"] == {"type": "ephemeral"}
 
@@ -465,7 +465,7 @@ from litellm import completion
 
 class TestAnthropicCompletion(BaseLLMChatTest, BaseAnthropicChatTest):
     def get_base_completion_call_args(self) -> dict:
-        return {"model": "anthropic/claude-3-5-sonnet-20240620"}
+        return {"model": "anthropic/claude-3-5-sonnet-latest"}
 
     def get_base_completion_call_args_with_thinking(self) -> dict:
         return {
@@ -482,13 +482,6 @@ class TestAnthropicCompletion(BaseLLMChatTest, BaseAnthropicChatTest):
         result = convert_to_anthropic_tool_invoke([tool_call_no_arguments])
         print(result)
 
-    def test_multilingual_requests(self):
-        """
-        Anthropic API raises a 400 BadRequest error when the request contains invalid utf-8 sequences.
-
-        Todo: if litellm.modify_params is True ensure it's a valid utf-8 sequence
-        """
-        pass
 
     def test_tool_call_and_json_response_format(self):
         """
@@ -1273,6 +1266,41 @@ def test_anthropic_text_editor():
         }]
     }
     
+    try:
+        response = litellm.completion(**params)
+    except litellm.InternalServerError as e:
+        print(e)
+
+    assert response is not None
+
+@pytest.mark.parametrize("spec", ["anthropic", "openai"])
+def test_anthropic_mcp_server_tool_use(spec: str):
+    litellm._turn_on_debug()
+
+    if spec == "anthropic":
+        tools = [
+            {
+                "type": "url",
+                "url": "https://mcp.deepwiki.com/mcp",
+                "name": "deepwiki-mcp",
+            }
+        ]
+    elif spec == "openai":
+        tools=[
+            {
+                "type": "mcp",
+                "server_label": "deepwiki",
+                "server_url": "https://mcp.deepwiki.com/mcp",
+                "require_approval": "never",
+            },
+        ]
+
+    params = {
+        "model": "anthropic/claude-sonnet-4-20250514",
+        "messages": [{"role": "user", "content": "Who won the World Cup in 2022?"}],
+        "tools": tools
+    }
+
     try:
         response = litellm.completion(**params)
     except litellm.InternalServerError as e:
