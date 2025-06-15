@@ -4,9 +4,9 @@ import Image from '@theme/IdealImage';
 
 # /mcp [BETA] - Model Context Protocol
 
-## Expose MCP tools on LiteLLM Proxy Server
+LiteLLM Proxy provides an MCP Gateway that allows you to use a fixed endpoint for all MCP tools and control MCP access by Key, Team. 
 
-This allows you to define tools that can be called by any MCP compatible client. Define your `mcp_servers` with LiteLLM and all your clients can list and call available tools.
+## Expose MCP tools on LiteLLM Proxy Server
 
 <Image 
   img={require('../img/mcp_2.png')}
@@ -16,22 +16,26 @@ This allows you to define tools that can be called by any MCP compatible client.
   LiteLLM MCP Architecture: Use MCP tools with all LiteLLM supported models
 </p>
 
+## LiteLLM Proxy - Walk through MCP Gateway
+LiteLLM exposes an MCP Gateway for admins to add all their MCP servers to LiteLLM. The key benefits of using LiteLLM Proxy with MCP are:
+
+1. Use a fixed endpoint for all MCP tools
+2. MCP Permission management by Key, Team, or User
+
+This video demonstrates how you can onboard an MCP server to LiteLLM Proxy, use it and set access controls.
+
+<iframe width="840" height="500" src="https://www.loom.com/embed/f7aa8d217879430987f3e64291757bfc" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+
 #### How it works
 
-LiteLLM exposes the following MCP endpoints:
+1. Allow proxy admin users to perform create, update, and delete operations on MCP servers stored in the db.
+2. Allows users to view and call tools to the MCP servers they have access to.
 
-- `/mcp/tools/list` - List all available tools
-- `/mcp/tools/call` - Call a specific tool with the provided arguments
 
-When MCP clients connect to LiteLLM they can follow this workflow:
+When MCP clients connect to LiteLLM's MCP Gateway they can run the following MCP operations::
+1. List Tools: List all available MCP tools on LiteLLM
+2. Call Tools: Call a specific MCP tool with the provided arguments
 
-1. Connect to the LiteLLM MCP server
-2. List all available tools on LiteLLM
-3. Client makes LLM API request with tool call(s)
-4. LLM API returns which tools to call and with what arguments
-5. MCP client makes MCP tool calls to LiteLLM
-6. LiteLLM makes the tool calls to the appropriate MCP server
-7. LiteLLM returns the tool call results to the MCP client
 
 #### Usage
 
@@ -421,9 +425,3 @@ async with stdio_client(server_params) as (read, write):
 
 </TabItem>
 </Tabs>
-
-### Permission Management
-
-Currently, all Virtual Keys are able to access the MCP endpoints. We are working on a feature to allow restricting MCP access by keys/teams/users/orgs.
-
-Join the discussion [here](https://github.com/BerriAI/litellm/discussions/9891)
